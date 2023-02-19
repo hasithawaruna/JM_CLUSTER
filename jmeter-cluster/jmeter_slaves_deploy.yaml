@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmeter-slaves
+  labels:
+    jmeter_mode: slave
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      jmeter_mode: slave
+  template:
+    metadata:
+      labels:
+        jmeter_mode: slave
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: jmeter_mode
+                operator: In
+                values:
+                - slave
+            topologyKey: "kubernetes.io/hostname"    
+      containers:
+      - name: jmslave
+        image: kubernautslabs/jmeter_slave:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: HEAP
+          value: "-Xms2g -Xmx2g -XX:MaxMetaspaceSize=512m"
+        ports:
+        - containerPort: 1099
+        - containerPort: 50000

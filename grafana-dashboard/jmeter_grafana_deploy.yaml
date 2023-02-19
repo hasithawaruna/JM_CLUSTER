@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmeter-grafana
+  labels:
+    app: jmeter-grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jmeter-grafana
+  template:
+    metadata:
+      labels:
+        app: jmeter-grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:6.7.6
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        env:
+        - name: GF_AUTH_BASIC_ENABLED
+          value: "true"
+        - name: GF_USERS_ALLOW_ORG_CREATE
+          value: "true"
+        - name: GF_AUTH_ANONYMOUS_ENABLED
+          value: "true"
+        - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+          value: Admin
+        - name: GF_SERVER_ROOT_URL
+          value: /
+        resources:
+          requests:
+            cpu: 20m
+            memory: 50Mi
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/grafana
+          subPath: grafana
+        - name: config-datasource-yml
+          mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+          subPath: datasources.yaml
+        - name: config-dashboard-yml
+          mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
+          subPath: dashboards.yaml
+        - name: config-dashboard-json
+          mountPath: /var/lib/grafana/dashboards/jmeter-metric.json
+          subPath: jmeter-metric.json
+      - name: jmreporter
+        image: kubernautslabs/jmeter-reporter:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8686
+      volumes:
+      - emptyDir: {}
+        name: data
+      - name: config-datasource-yml
+        configMap:
+          name: datasource-config
+      - name: config-dashboard-yml
+        configMap:
+          name: dashboard-config
+      - name: config-dashboard-json
+        configMap:
+          name: dashboard-json

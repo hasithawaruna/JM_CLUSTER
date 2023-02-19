@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmeter-master
+  labels:
+    jmeter_mode: master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      jmeter_mode: master
+  template:
+    metadata:
+      labels:
+        jmeter_mode: master
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: jmeter_mode
+                operator: In
+                values:
+                - slave
+            topologyKey: "kubernetes.io/hostname"     
+      containers:
+      - name: jmmaster
+        image: kubernautslabs/jmeter_master:latest
+        imagePullPolicy: IfNotPresent
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
+        env:
+        - name: HEAP
+          value: "-Xms2g -Xmx2g -XX:MaxMetaspaceSize=512m"
+        volumeMounts:
+          - name: loadtest
+            mountPath: /load_test
+            subPath: "load_test"
+          - name: user-properties
+            mountPath: /jmeter/apache-jmeter-5.0/bin/user.properties
+            subPath: "user.properties"
+        ports:
+        - containerPort: 60000
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "cp -r /load_test /jmeter/load_test && chmod 755 /jmeter/load_test"]
+      volumes:
+      - name: loadtest 
+        configMap:
+         name: jmeter-load-test
+         defaultMode: 0755
+      - name: user-properties
+        configMap:
+         name: jmeter-user-properties
+         defaultMode: 0755
