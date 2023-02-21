@@ -1,0 +1,18 @@
+Get latest repo update : git pull origin master
+
+> jmeter_master_configmap.yaml for user.prop changes
+> jmeter_cluster_create.sh
+> Wait and user general commands
+
+
+Run below commands directly to change master configs
+
+Go to jmeter config directory, then
+1. root@D3MON-PC:~/jmeter-cluster/jmeter-cluster# kubectl apply -f jmeter_master_configmap.yaml
+2. root@D3MON-PC:~/jmeter-cluster/jmeter-cluster# kubectl apply -f jmeter_master_deploy.yaml
+3. root@D3MON-PC:~/jmeter-cluster/jmeter-cluster# kubectl apply -f jmeter_slaves_deploy.yaml
+4. root@D3MON-PC:~/jmeter-cluster/jmeter-cluster# kubectl rollout restart deployment jmeter-master 
+
+To delet full deployemnt : kubectl delete deploy jmeter-master
+
+
